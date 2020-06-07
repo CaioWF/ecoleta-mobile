@@ -37,6 +37,8 @@ const Points = () => {
   const route = useRoute();
 
   const routeParams = route.params as Params;
+  console.log(routeParams);
+  
 
   useEffect(() => {
     api.get('items').then(response => {
@@ -52,7 +54,7 @@ const Points = () => {
         items: selectedItems
       }
     }).then(response => {
-      setPoints(response.data);
+      setPoints(response.data);      
     })
   }, [selectedItems])
 
@@ -75,8 +77,10 @@ const Points = () => {
     navigation.goBack()
   }
 
-  function handleNavigateToDetail() {
-    navigation.navigate('Detail')
+  function handleNavigateToDetail(point_id: number) {
+    navigation.navigate('Detail', {
+      point_id
+    })
   }
 
   function handleSelectedItem(id: number) {
@@ -115,7 +119,7 @@ const Points = () => {
                 <Marker
                   key={String(point.id)}
                   style={styles.mapMarker}
-                  onPress={handleNavigateToDetail}
+                  onPress={() => handleNavigateToDetail(point.id)}
                   coordinate={{
                     latitude: point.latitude,
                     longitude: point.longitude,

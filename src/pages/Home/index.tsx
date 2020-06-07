@@ -1,20 +1,55 @@
-import React, {useState} from 'react';
+import React, {useState, useEffect} from 'react';
 import {Feather as Icon} from '@expo/vector-icons';
 import {View, Image, TextInput, Platform, KeyboardAvoidingView, StyleSheet, Text, ImageBackground} from 'react-native';
 import {RectButton} from 'react-native-gesture-handler';
 import {useNavigation} from '@react-navigation/native';
+import ibge from '../../services/ibge';
+import {Select} from './components/Select';
+
+interface IBGEUFResponse {
+  sigla: string
+}
+
+interface IBGECityResponse {
+  nome: string
+}
 
 const Home = () => {
-  const [city, setCity] = useState('');
-  const [uf, setUf] = useState('');
+  const [ufs, setUfs] = useState<string[]>(['']);
+  const [cities, setCities] = useState<string[]>(['']);
+  const [selectedUf, setSelectedUf] = useState('Escolha um Estado');
+  const [selectedCity, setSelectedCity] = useState('Escolha um Cidade');
 
   const navigation = useNavigation();
+  
+  useEffect(() => {
+    ibge.get<IBGEUFResponse[]>('estados').then(response => {
+      const ufInitials = response.data.map(uf => uf.sigla);
+      setUfs(ufInitials);
+    })
+  }, [])
+  
+  useEffect(() => {
+    if (selectedUf === '0') return
+    ibge.get<IBGECityResponse[]>(`estados/${selectedUf}/municipios`).then(response => {
+      const cityNames = response.data.map(city => city.nome);
+      setCities(cityNames);
+    })
+  }, [selectedUf])
 
   function handleNavigateToPoints() {
       navigation.navigate('Points', {
-        uf,
-        city
+        uf: selectedUf,
+        city: selectedCity
       });
+  }
+
+  function handleSelectUf(value: string) {
+    setSelectedUf(value)
+  }
+  
+  function handleSelectCity(value: string) {
+    setSelectedCity(value)
   }
 
   return (
@@ -32,21 +67,15 @@ const Home = () => {
           </View>
         </View>
         <View style={styles.footer}>
-          <TextInput 
-            style={styles.input}
-            placeholder="Digite a UF"
-            maxLength={2}
-            autoCapitalize="characters"
-            autoCorrect={false}
-            value={uf}
-            onChangeText={setUf}
+          <Select
+            value={selectedUf}
+            onChangeText={handleSelectUf}
+            data={ufs.map(uf => ({value: uf}))}
           />
-          <TextInput 
-            style={styles.input}
-            placeholder="Digite a Cidade"
-            value={city}
-            autoCorrect={false}
-            onChangeText={setCity}
+          <Select
+            value={selectedCity}
+            onChangeText={handleSelectCity}
+            data={cities.map(city => ({value: city}))}
           />
           <RectButton style={styles.button} onPress={handleNavigateToPoints}>
             <View style={styles.buttonIcon}>
